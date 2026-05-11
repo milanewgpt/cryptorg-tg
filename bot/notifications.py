@@ -21,13 +21,27 @@ POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", "30"))
 _last_state: dict[int, dict] = {}
 
 
-def _fmt_pnl(pos: dict) -> str:
-    pnl = pos.get("unrealisedPnl", "")
+def _fmt_float(val) -> str:
     try:
-        f = float(pnl)
+        f = float(val)
         return f"{'+'if f >= 0 else ''}{f:.4f} USDT"
     except (TypeError, ValueError):
-        return str(pnl) if pnl else "—"
+        return "—"
+
+
+def _so_notify_text(pair: str, prev_size: float, new_size: float, pos: dict) -> str:
+    avg = pos.get("avgPrice", "—")
+    mark = pos.get("markPrice", "—")
+    unrealised = _fmt_float(pos.get("unrealisedPnl"))
+    cum_realised = _fmt_float(pos.get("cumRealisedPnl"))
+    return (
+        f"*Safety Order Filled*\n{pair}\n\n"
+        f"Объём: {prev_size} → {new_size}\n"
+        f"Avg Entry: `{avg}`\n"
+        f"Mark Price: `{mark}`\n"
+        f"Позиция PnL: `{unrealised}`\n"
+        f"Реализовано всего: `{cum_realised}`"
+    )
 
 
 async def _notify(bot: Bot, user_id: int, text: str):
@@ -70,20 +84,21 @@ async def _poll_once(bot: Bot, bybit: BybitClient):
                     new_size = float(curr_size)
                     if new_size > prev_size:
                         await _notify(bot, rb.telegram_user,
-                            f"*Safety Order Filled*\n{rb.pair}\n\n"
-                            f"Объём: {prev_size} → {new_size}\n"
-                            f"Avg Entry: {curr_avg}\n"
-                            f"PnL: {_fmt_pnl(pos)}"
+                            _so_notify_text(rb.pair, prev_size, new_size, pos)
                         )
 
-                _last_state[rb.id] = {"size": curr_size, "avgPrice": curr_avg}
+                _last_state[rb.id] = {
+                    "size": curr_size,
+                    "avgPrice": curr_avg,
+                    "cumRealisedPnl": pos.get("cumRealisedPnl", ""),
+                }
 
             else:
                 # Position gone → closed (TP or SL)
                 if prev is not None:
-                    pnl_str = _fmt_pnl(prev) if prev.get("unrealisedPnl") else "—"
+                    cum = _fmt_float(prev.get("cumRealisedPnl"))
                     await _notify(bot, rb.telegram_user,
-                        f"*Position Closed*\n{rb.pair}\n\nPnL: {pnl_str}"
+                        f"*Position Closed*\n{rb.pair}\n\nРеализовано: `{cum}`"
                     )
                     async with factory() as s2:
                         bot_row = await s2.get(RunningBot, rb.id)

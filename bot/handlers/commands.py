@@ -246,14 +246,18 @@ async def _send_status(reply_fn, bot: RunningBot, template, context: ContextType
         positions = await bybit.get_positions(symbol=bot.pair)
         pos = positions[0] if positions else {}
 
-        pnl_raw = pos.get("unrealisedPnl", "")
-        try:
-            pnl = f"{'+'if float(pnl_raw)>=0 else ''}{float(pnl_raw):.4f} USDT" if pnl_raw else "—"
-        except (TypeError, ValueError):
-            pnl = "—"
+        def fmt(val):
+            try:
+                f = float(val)
+                return f"{'+'if f >= 0 else ''}{f:.4f} USDT"
+            except (TypeError, ValueError):
+                return "—"
 
         entry = pos.get("avgPrice", "—")
+        mark = pos.get("markPrice", "—")
         size = pos.get("size", "—")
+        unrealised = fmt(pos.get("unrealisedPnl"))
+        cum_realised = fmt(pos.get("cumRealisedPnl"))
         elapsed = datetime.now(timezone.utc) - bot.created_at.replace(tzinfo=timezone.utc)
         hours = int(elapsed.total_seconds() // 3600)
         minutes = int((elapsed.total_seconds() % 3600) // 60)
@@ -261,8 +265,10 @@ async def _send_status(reply_fn, bot: RunningBot, template, context: ContextType
         text = (
             f"*{bot.pair}*\n"
             f"Шаблон: {template.name if template else '—'}\n"
-            f"PnL: `{pnl}`\n"
-            f"Entry: `{entry}`\n"
+            f"Avg Entry: `{entry}`\n"
+            f"Mark Price: `{mark}`\n"
+            f"Позиция PnL: `{unrealised}`\n"
+            f"Реализовано всего: `{cum_realised}`\n"
             f"Объём: `{size}`\n"
             f"Работает: {hours}ч {minutes}м"
         )
