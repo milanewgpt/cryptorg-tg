@@ -1,4 +1,5 @@
 import os
+from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from .models import Base
 
@@ -9,9 +10,8 @@ _session_factory = None
 def get_engine():
     global _engine
     if _engine is None:
-        url = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///cryptorg_bot.db")
-        # sqlalchemy async requires aiosqlite driver for sqlite
-        url = url.replace("sqlite:///", "sqlite+aiosqlite:///")
+        db_path = os.getenv("DB_PATH", "cryptorg_bot.db")
+        url = URL.create(drivername="sqlite+aiosqlite", database=db_path)
         _engine = create_async_engine(url, echo=False)
     return _engine
 
