@@ -57,7 +57,7 @@ class BybitClient:
                 import json as _json
                 data = _json.loads(text)
             except Exception as e:
-                logger.error("Bybit JSON parse error: %s | status=%s | body=%s", e, resp.status, text[:300])
+                logger.error("Bybit JSON parse error: %s | status=%s | body=%r", e, resp.status, text[:1000])
                 raise
             if data.get("retCode") != 0:
                 raise RuntimeError(f"Bybit {path}: {data.get('retMsg')} ({data.get('retCode')})")
