@@ -26,7 +26,7 @@ class CryptorgError(Exception):
     pass
 
 
-JWT_CACHE_FILE = os.path.join(os.path.dirname(__file__), ".jwt_cache")
+JWT_CACHE_FILE = os.getenv("JWT_CACHE_PATH", os.path.join(os.path.dirname(__file__), ".jwt_cache"))
 
 
 class CryptorgClient:
