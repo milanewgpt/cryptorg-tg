@@ -12,7 +12,7 @@ import aiohttp
 
 logger = logging.getLogger(__name__)
 
-BYBIT_BASE = "https://api.bybit.com"
+BYBIT_BASE = os.getenv("BYBIT_BASE_URL", "https://api.bybit.com")
 RECV_WINDOW = "5000"
 
 
