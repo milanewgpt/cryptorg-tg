@@ -206,6 +206,48 @@ async def handle_start_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
+async def handle_delete_pick(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Callback: del_pick:<bot_id> — show delete confirmation."""
+    query = update.callback_query
+    await query.answer()
+
+    bot_id = int(query.data.split(":")[1])
+    client: CryptorgClient = context.bot_data["cryptorg"]
+    try:
+        bot_data = await client.get_bot(bot_id)
+    except CryptorgError as e:
+        await query.edit_message_text(f"Ошибка:\n`{e}`", parse_mode="Markdown")
+        return
+
+    title = bot_data.get("title", f"Bot {bot_id}")
+    pairs = ", ".join(bot_data.get("pairs", ["?"]))
+    buttons = [
+        [
+            InlineKeyboardButton("Удалить ✅", callback_data=f"del_confirm:{bot_id}"),
+            InlineKeyboardButton("Отмена ❌", callback_data="cancel_flow"),
+        ]
+    ]
+    await query.edit_message_text(
+        f"Удалить шаблон *{title}*?\nПара: {pairs}",
+        reply_markup=InlineKeyboardMarkup(buttons),
+        parse_mode="Markdown",
+    )
+
+
+async def handle_delete_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Callback: del_confirm:<bot_id> — delete the bot."""
+    query = update.callback_query
+    await query.answer()
+
+    bot_id = int(query.data.split(":")[1])
+    client: CryptorgClient = context.bot_data["cryptorg"]
+    try:
+        await client.delete_bot(bot_id)
+        await query.edit_message_text(f"Шаблон `{bot_id}` удалён.", parse_mode="Markdown")
+    except CryptorgError as e:
+        await query.edit_message_text(f"Ошибка удаления:\n`{e}`", parse_mode="Markdown")
+
+
 async def handle_cancel_flow(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
