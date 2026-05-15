@@ -17,13 +17,12 @@ from cryptorg.client import CryptorgClient, CryptorgError
 from bybit.client import BybitClient
 from bot.handlers.commands import (
     cmd_new, cmd_active, cmd_stop, cmd_close,
-    cmd_cancel, cmd_status, cmd_templates, cmd_delete, handle_text_input,
+    cmd_cancel, cmd_status, cmd_templates, handle_text_input,
     handle_sel_status, handle_sel_stop, handle_sel_close, handle_sel_cancel,
 )
 from bot.handlers.callbacks import (
     handle_template_choice, handle_start_bot, handle_cancel_flow,
     handle_edit_params, handle_param_select, handle_set_strategy,
-    handle_delete_pick, handle_delete_confirm,
 )
 from bot.notifications import run_poller
 
@@ -53,7 +52,6 @@ async def post_init(app: Application):
         BotCommand("close",     "Закрыть позицию по рынку — /close DOGEUSDT"),
         BotCommand("cancel",    "Закрыть сделку по рынку — /cancel DOGEUSDT"),
         BotCommand("templates", "Список шаблонов"),
-        BotCommand("delete",    "Удалить шаблон"),
     ])
     client = CryptorgClient()
     app.bot_data["cryptorg"] = client
@@ -101,15 +99,12 @@ def main():
     app.add_handler(CommandHandler("cancel", cmd_cancel, filters=auth))
     app.add_handler(CommandHandler("status", cmd_status, filters=auth))
     app.add_handler(CommandHandler("templates", cmd_templates, filters=auth))
-    app.add_handler(CommandHandler("delete", cmd_delete, filters=auth))
 
     app.add_handler(CallbackQueryHandler(handle_template_choice, pattern=r"^tpl:"))
     app.add_handler(CallbackQueryHandler(handle_edit_params, pattern=r"^edit_params:"))
     app.add_handler(CallbackQueryHandler(handle_param_select, pattern=r"^param:"))
     app.add_handler(CallbackQueryHandler(handle_set_strategy, pattern=r"^set_strategy:"))
     app.add_handler(CallbackQueryHandler(handle_start_bot, pattern=r"^start:"))
-    app.add_handler(CallbackQueryHandler(handle_delete_pick, pattern=r"^del_pick:"))
-    app.add_handler(CallbackQueryHandler(handle_delete_confirm, pattern=r"^del_confirm:"))
     app.add_handler(CallbackQueryHandler(handle_cancel_flow, pattern=r"^cancel_flow$"))
     app.add_handler(CallbackQueryHandler(handle_sel_status, pattern=r"^sel_status:"))
     app.add_handler(CallbackQueryHandler(handle_sel_stop, pattern=r"^sel_stop:"))

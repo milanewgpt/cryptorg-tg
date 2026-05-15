@@ -306,39 +306,6 @@ async def cmd_templates(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("\n\n".join(lines), parse_mode="Markdown")
 
 
-async def cmd_delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    client: CryptorgClient = context.bot_data["cryptorg"]
-    try:
-        bots = await client.get_bots()
-    except CryptorgError as e:
-        await update.message.reply_text(f"Ошибка Cryptorg:\n`{e}`", parse_mode="Markdown")
-        return
-
-    async with _factory()() as session:
-        active_cbot_ids = set((await session.execute(
-            select(RunningBot.cryptorg_bot_id)
-            .where(RunningBot.status == "active")
-        )).scalars().all())
-
-    templates = [b for b in bots if b["id"] not in active_cbot_ids]
-
-    if not templates:
-        await update.message.reply_text("Нет шаблонов для удаления.")
-        return
-
-    buttons = [
-        [InlineKeyboardButton(
-            f"{b.get('title') or 'Bot ' + str(b['id'])} ({', '.join(b.get('pairs', ['?']))})",
-            callback_data=f"del_pick:{b['id']}"
-        )]
-        for b in templates
-    ]
-    await update.message.reply_text(
-        "Выберите шаблон для удаления:",
-        reply_markup=InlineKeyboardMarkup(buttons),
-    )
-
-
 async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
     raw = (update.message.text or "").strip()
 
