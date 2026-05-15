@@ -73,10 +73,10 @@ def make_edit_buttons(params: dict, tpl_id: int, pair: str) -> InlineKeyboardMar
     rows = [
         [InlineKeyboardButton(f"✏️ Стратегия: {strategy_ru}", callback_data="param:strategy")],
         [InlineKeyboardButton(f"✏️ Вход: {_v('volume')} USDT", callback_data="param:volume")],
-        [InlineKeyboardButton(f"✏️ Шаг СО: {_v('so_step')}%", callback_data="param:so_step")],
+        [InlineKeyboardButton(f"✏️ Шаг: {_v('so_step')}%", callback_data="param:so_step")],
         [
-            InlineKeyboardButton(f"✏️ Мульт. шага: {_v('step_mult')}", callback_data="param:step_mult"),
-            InlineKeyboardButton(f"✏️ Мульт. объёма: {_v('vol_mult')}", callback_data="param:vol_mult"),
+            InlineKeyboardButton(f"✏️ Множ. шага: {_v('step_mult')}", callback_data="param:step_mult"),
+            InlineKeyboardButton(f"✏️ Множ. объёма: {_v('vol_mult')}", callback_data="param:vol_mult"),
         ],
         [InlineKeyboardButton(f"✏️ ТП: {_v('tp')}%", callback_data="param:tp")],
         [InlineKeyboardButton(f"✏️ Циклов: {cycles_str}", callback_data="param:cycles")],
