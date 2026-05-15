@@ -306,16 +306,72 @@ async def cmd_templates(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("\n\n".join(lines), parse_mode="Markdown")
 
 
-async def handle_plain_ticker(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = (update.message.text or "").strip().upper()
-    if not re.fullmatch(r"[A-Z]{2,10}(USDT)?", text):
+async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    raw = (update.message.text or "").strip()
+
+    # Param editing mode takes priority
+    editing_field = context.user_data.get("editing_field")
+    if editing_field:
+        await _handle_param_value(update, context, editing_field, raw)
         return
 
+    # Ticker input for /new flow
+    upper = raw.upper()
+    if not re.fullmatch(r"[A-Z]{2,10}(USDT)?", upper):
+        return
     pending = context.user_data.pop("pending_cmd", None)
-    context.args = [text]
-
+    context.args = [upper]
     if pending == "new":
         await cmd_new(update, context)
+
+
+async def _handle_param_value(
+    update: Update, context: ContextTypes.DEFAULT_TYPE,
+    field: str, raw: str,
+):
+    from bot.handlers.param_utils import get_display_params, format_params_text, make_edit_buttons
+
+    state = context.user_data.get("edit_state")
+    if not state:
+        context.user_data.pop("editing_field", None)
+        return
+
+    NUMERIC = {"tp", "volume", "so_step", "vol_mult", "step_mult"}
+    INT_FIELDS = {"cycles"}
+
+    try:
+        if field in NUMERIC:
+            value = float(raw.replace(",", "."))
+            if value <= 0:
+                raise ValueError("должно быть больше 0")
+        elif field in INT_FIELDS:
+            value = int(raw)
+            if value < 0:
+                raise ValueError("не может быть отрицательным")
+        else:
+            value = raw
+    except ValueError as e:
+        await update.message.reply_text(f"Неверное значение: {e}.\nВведите ещё раз:")
+        return  # keep editing_field so next message is also handled
+
+    context.user_data.pop("editing_field")
+
+    # Store 0 cycles as None (unlimited)
+    if field == "cycles" and value == 0:
+        value = None
+        state.setdefault("custom_overrides", {}).pop("cycles", None)
+    else:
+        state.setdefault("custom_overrides", {})[field] = value
+
+    tpl_id = state["template_id"]
+    pair = state["pair"]
+    title = state.get("title", f"Bot {tpl_id}")
+    display_params = get_display_params(state)
+
+    text = format_params_text(title, pair, display_params)
+    text += "\n\nВыберите параметр для изменения:"
+    kb = make_edit_buttons(display_params, tpl_id, pair)
+    await update.message.reply_text(text, reply_markup=kb, parse_mode="Markdown")
 
 
 # ── Inline button handlers for bot selection ──────────────────────────────────

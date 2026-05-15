@@ -26,7 +26,7 @@ class CryptorgError(Exception):
     pass
 
 
-JWT_CACHE_FILE = os.getenv("JWT_CACHE_PATH", os.path.join(os.path.dirname(__file__), ".jwt_cache"))
+JWT_CACHE_FILE = os.path.join(os.path.dirname(__file__), ".jwt_cache")
 
 
 class CryptorgClient:
@@ -248,7 +248,9 @@ class CryptorgClient:
 
         return await self.update_bot(bot_id, payload)
 
-    async def clone_bot(self, template_id: int, new_pair: str, title: str | None = None) -> dict:
+    async def clone_bot(self, template_id: int, new_pair: str,
+                        title: str | None = None,
+                        overrides: dict | None = None) -> dict:
         """Create a new bot by copying a template with a different pair. Returns new bot data."""
         config = await self.get_bot(template_id)
         old_pair = (config.get("pairs") or [""])[0]
@@ -263,8 +265,46 @@ class CryptorgClient:
                 payload.get("parameters", {}), old_pair, new_pair
             )
 
+        if overrides:
+            self._apply_overrides(payload, overrides)
+
         result = await self._request("POST", "/crazy/api/bots", json=payload)
         return result.get("data", result) if isinstance(result, dict) else result
+
+    @staticmethod
+    def _apply_overrides(payload: dict, overrides: dict) -> None:
+        """Apply flat overrides dict to bot payload in-place.
+
+        Keys: strategy, tp, volume, so_step, vol_mult, step_mult, cycles
+        """
+        params = payload.setdefault("parameters", {})
+
+        if "strategy" in overrides:
+            payload["strategy"] = overrides["strategy"]
+
+        if "tp" in overrides:
+            params.setdefault("close", {})["tp_value"] = str(overrides["tp"])
+
+        if "volume" in overrides:
+            params.setdefault("open", {})["order_volume"] = str(overrides["volume"])
+            params.setdefault("dca", {})["so_volume"] = str(overrides["volume"])
+
+        if "so_step" in overrides:
+            params.setdefault("dca", {})["so_percent"] = str(overrides["so_step"])
+
+        if "vol_mult" in overrides:
+            params.setdefault("dca", {})["so_multiplier_volume"] = str(overrides["vol_mult"])
+
+        if "step_mult" in overrides:
+            params.setdefault("dca", {})["so_multiplier_price"] = str(overrides["step_mult"])
+
+        if "cycles" in overrides:
+            open_p = params.setdefault("open", {})
+            restr = open_p.setdefault("self_opening_restrictions", {})
+            restr.setdefault("cycles", {}).update({
+                "is_active": True,
+                "limit": int(overrides["cycles"]),
+            })
 
     async def delete_bot(self, bot_id: int) -> dict:
         return await self._request("DELETE", f"/crazy/api/bots/{bot_id}")

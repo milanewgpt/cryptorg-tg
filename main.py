@@ -17,11 +17,12 @@ from cryptorg.client import CryptorgClient, CryptorgError
 from bybit.client import BybitClient
 from bot.handlers.commands import (
     cmd_new, cmd_active, cmd_stop, cmd_close,
-    cmd_cancel, cmd_status, cmd_templates, handle_plain_ticker,
+    cmd_cancel, cmd_status, cmd_templates, handle_text_input,
     handle_sel_status, handle_sel_stop, handle_sel_close, handle_sel_cancel,
 )
 from bot.handlers.callbacks import (
     handle_template_choice, handle_start_bot, handle_cancel_flow,
+    handle_edit_params, handle_param_select, handle_set_strategy,
 )
 from bot.notifications import run_poller
 
@@ -100,6 +101,9 @@ def main():
     app.add_handler(CommandHandler("templates", cmd_templates, filters=auth))
 
     app.add_handler(CallbackQueryHandler(handle_template_choice, pattern=r"^tpl:"))
+    app.add_handler(CallbackQueryHandler(handle_edit_params, pattern=r"^edit_params:"))
+    app.add_handler(CallbackQueryHandler(handle_param_select, pattern=r"^param:"))
+    app.add_handler(CallbackQueryHandler(handle_set_strategy, pattern=r"^set_strategy:"))
     app.add_handler(CallbackQueryHandler(handle_start_bot, pattern=r"^start:"))
     app.add_handler(CallbackQueryHandler(handle_cancel_flow, pattern=r"^cancel_flow$"))
     app.add_handler(CallbackQueryHandler(handle_sel_status, pattern=r"^sel_status:"))
@@ -107,7 +111,7 @@ def main():
     app.add_handler(CallbackQueryHandler(handle_sel_close, pattern=r"^sel_close:"))
     app.add_handler(CallbackQueryHandler(handle_sel_cancel, pattern=r"^sel_cancel:"))
 
-    app.add_handler(MessageHandler(auth & filters.TEXT & ~filters.COMMAND, handle_plain_ticker))
+    app.add_handler(MessageHandler(auth & filters.TEXT & ~filters.COMMAND, handle_text_input))
 
     app.run_polling(allowed_updates=Update.ALL_TYPES)
 
