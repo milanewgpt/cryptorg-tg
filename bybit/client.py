@@ -12,7 +12,7 @@ import aiohttp
 
 logger = logging.getLogger(__name__)
 
-BYBIT_BASE = os.getenv("BYBIT_BASE_URL", "https://api.bybit.com")
+BYBIT_BASE = "https://api.bybit.com"
 RECV_WINDOW = "5000"
 
 
@@ -52,13 +52,7 @@ class BybitClient:
         url = f"{BYBIT_BASE}{path}?{query_string}" if query_string else f"{BYBIT_BASE}{path}"
         sess = await self._get_session()
         async with sess.get(url, headers=headers) as resp:
-            text = await resp.text()
-            try:
-                import json as _json
-                data = _json.loads(text)
-            except Exception as e:
-                logger.error("Bybit JSON parse error: %s | status=%s | body=%r", e, resp.status, text[:1000])
-                raise
+            data = await resp.json(content_type=None)
             if data.get("retCode") != 0:
                 raise RuntimeError(f"Bybit {path}: {data.get('retMsg')} ({data.get('retCode')})")
             return data

@@ -112,16 +112,10 @@ async def _poll_once(bot: Bot, bybit: BybitClient):
 async def sync_active_deals(bybit: BybitClient, telegram_user_id: int):
     """Import open Bybit positions into DB if not already tracked."""
     factory = get_session_factory()
-    positions = None
-    for attempt in range(5):
-        try:
-            positions = await bybit.get_positions()
-            break
-        except Exception as e:
-            logger.warning("sync: attempt %d failed: %s", attempt + 1, e)
-            await asyncio.sleep(5)
-    if positions is None:
-        logger.error("sync: all attempts failed, skipping")
+    try:
+        positions = await bybit.get_positions()
+    except Exception as e:
+        logger.warning("sync: get_positions failed: %s", e)
         return
 
     async with factory() as session:
@@ -154,7 +148,6 @@ async def sync_active_deals(bybit: BybitClient, telegram_user_id: int):
 
 async def run_poller(bot: Bot, bybit: BybitClient, telegram_user_id: int = 0):
     logger.info("Poller started (Bybit API, interval=%ss)", POLL_INTERVAL)
-    await asyncio.sleep(5)  # wait for network to be ready on cold start
     if telegram_user_id:
         await sync_active_deals(bybit, telegram_user_id)
     while True:
