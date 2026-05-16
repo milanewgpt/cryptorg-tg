@@ -204,6 +204,12 @@ async def handle_start_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(
             f"*Ошибка Cryptorg*\n`{e}`", parse_mode="Markdown"
         )
+    except Exception as e:
+        logger.exception("handle_start_bot unexpected error")
+        msg = f"*Ошибка*\n`{type(e).__name__}: {e}`"
+        if new_bot_id:
+            msg += f"\n\nБот запущен (ID `{new_bot_id}`), но запись в БД не сохранена."
+        await query.edit_message_text(msg, parse_mode="Markdown")
 
 
 async def handle_cancel_flow(update: Update, context: ContextTypes.DEFAULT_TYPE):
