@@ -65,7 +65,7 @@ async def post_init(app: Application):
         if ALLOWED_USER_ID:
             await app.bot.send_message(chat_id=ALLOWED_USER_ID,
                 text=f"Не удалось войти в Cryptorg:\n`{e}`", parse_mode="Markdown")
-    asyncio.create_task(run_poller(app.bot, bybit, ALLOWED_USER_ID))
+    asyncio.create_task(run_poller(app.bot, bybit, client, ALLOWED_USER_ID))
 
 
 async def post_shutdown(app: Application):

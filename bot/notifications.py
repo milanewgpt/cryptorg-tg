@@ -11,6 +11,7 @@ from sqlalchemy import select
 from telegram import Bot
 
 from bybit.client import BybitClient
+from cryptorg.client import CryptorgClient
 from db.database import get_session_factory
 from db.models import RunningBot
 
@@ -109,7 +110,7 @@ async def _poll_once(bot: Bot, bybit: BybitClient):
                     _last_state.pop(rb.id, None)
 
 
-async def sync_active_deals(bybit: BybitClient, telegram_user_id: int):
+async def sync_active_deals(bybit: BybitClient, cryptorg: CryptorgClient, telegram_user_id: int):
     """Import open Bybit positions into DB if not already tracked."""
     factory = get_session_factory()
     try:
@@ -117,6 +118,17 @@ async def sync_active_deals(bybit: BybitClient, telegram_user_id: int):
     except Exception as e:
         logger.warning("sync: get_positions failed: %s", e)
         return
+
+    # Build pair → cryptorg_bot_id map from active Cryptorg bots
+    cryptorg_bot_by_pair: dict[str, int] = {}
+    try:
+        all_bots = await cryptorg.get_bots()
+        for b in all_bots:
+            if b.get("status") == 4:  # active
+                for pair in b.get("pairs", []):
+                    cryptorg_bot_by_pair[pair] = b["id"]
+    except Exception as e:
+        logger.warning("sync: get_bots failed: %s", e)
 
     async with factory() as session:
         for pos in positions:
@@ -133,23 +145,25 @@ async def sync_active_deals(bybit: BybitClient, telegram_user_id: int):
             )).scalar_one_or_none()
 
             if existing is None:
+                cbot_id = cryptorg_bot_by_pair.get(symbol, 0)
                 session.add(RunningBot(
                     telegram_user=telegram_user_id,
                     template_id=None,
-                    cryptorg_bot_id=0,
+                    cryptorg_bot_id=cbot_id,
                     deal_id=None,
                     pair=symbol,
                     status="active",
                 ))
-                logger.info("sync: imported position pair=%s size=%s", symbol, size)
+                logger.info("sync: imported position pair=%s size=%s cryptorg_bot_id=%s",
+                            symbol, size, cbot_id)
 
         await session.commit()
 
 
-async def run_poller(bot: Bot, bybit: BybitClient, telegram_user_id: int = 0):
+async def run_poller(bot: Bot, bybit: BybitClient, cryptorg: CryptorgClient, telegram_user_id: int = 0):
     logger.info("Poller started (Bybit API, interval=%ss)", POLL_INTERVAL)
     if telegram_user_id:
-        await sync_active_deals(bybit, telegram_user_id)
+        await sync_active_deals(bybit, cryptorg, telegram_user_id)
     while True:
         try:
             await _poll_once(bot, bybit)
