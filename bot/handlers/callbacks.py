@@ -153,6 +153,7 @@ async def handle_start_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     client: CryptorgClient = context.bot_data["cryptorg"]
     new_bot_id = None
+    _step = "clone"
     try:
         tpl_config = await client.get_bot(template_bot_id)
         tpl_title = tpl_config.get("title", f"Bot {template_bot_id}")
@@ -160,6 +161,7 @@ async def handle_start_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
         new_bot = await client.clone_bot(template_bot_id, pair, overrides=overrides or None)
         new_bot_id = new_bot["id"]
 
+        _step = "start"
         await client.start_bot(new_bot_id)
 
         await asyncio.sleep(3)
@@ -201,9 +203,11 @@ async def handle_start_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await client.delete_bot(new_bot_id)
             except Exception:
                 pass
-        await query.edit_message_text(
-            f"*Ошибка Cryptorg*\n`{e}`", parse_mode="Markdown"
-        )
+        if _step == "start" and "500" in str(e):
+            msg = f"Пара *{pair}* не найдена на Bybit — бот не запущен."
+        else:
+            msg = f"*Ошибка Cryptorg*\n`{e}`"
+        await query.edit_message_text(msg, parse_mode="Markdown")
     except Exception as e:
         logger.exception("handle_start_bot unexpected error")
         msg = f"*Ошибка*\n`{type(e).__name__}: {e}`"
