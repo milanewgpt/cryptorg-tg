@@ -1,7 +1,9 @@
 """Helpers for template parameter preview and editing."""
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-STRATEGY_RU = {"long": "Лонг", "short": "Шорт"}
+STRATEGY_EN = {"long": "Long", "short": "Short"}
+# keep old name as alias so any leftover imports don't break
+STRATEGY_RU = STRATEGY_EN
 
 
 def extract_params(bot_data: dict) -> dict:
@@ -37,26 +39,26 @@ def get_display_params(state: dict) -> dict:
 def format_params_text(title: str, pair: str, params: dict) -> str:
     """Build the params preview message."""
     display_pair = pair.removesuffix("USDT")
-    strategy_ru = STRATEGY_RU.get(str(params.get("strategy", "long")).lower(), "Лонг")
+    strategy_en = STRATEGY_EN.get(str(params.get("strategy", "long")).lower(), "Long")
 
     def _v(key, default="—"):
         v = params.get(key)
         return v if v is not None else default
 
     lines = [
-        f"*{strategy_ru} {display_pair}*",
-        f"Шаблон: {title}",
+        f"*{strategy_en} {display_pair}*",
+        f"Template: {title}",
         "",
-        "Параметры:",
-        f"• Вход {_v('volume')} USDT, плечо ×{_v('leverage')}",
-        f"• Усреднений {_v('so_max')}, шаг {_v('so_step')}%",
-        f"• Множитель шага {_v('step_mult')}, объёма {_v('vol_mult')}",
-        f"• ТП {_v('tp')}%",
+        "Parameters:",
+        f"• Entry {_v('volume')} USDT, leverage ×{_v('leverage')}",
+        f"• Safety orders {_v('so_max')}, step {_v('so_step')}%",
+        f"• Price step mult {_v('step_mult')}, volume mult {_v('vol_mult')}",
+        f"• TP {_v('tp')}%",
     ]
 
     cycles = params.get("cycles")
     if cycles is not None:
-        lines.append(f"• Циклов: {cycles}")
+        lines.append(f"• Cycles: {cycles}")
 
     return "\n".join(lines)
 
@@ -67,22 +69,22 @@ def make_edit_buttons(params: dict, tpl_id: int, pair: str) -> InlineKeyboardMar
         v = params.get(key)
         return f"{v}{suffix}" if v is not None else "—"
 
-    strategy_ru = STRATEGY_RU.get(str(params.get("strategy", "long")).lower(), "Лонг")
+    strategy_en = STRATEGY_EN.get(str(params.get("strategy", "long")).lower(), "Long")
     cycles_str = str(params["cycles"]) if params.get("cycles") is not None else "∞"
 
     rows = [
-        [InlineKeyboardButton(f"✏️ Стратегия: {strategy_ru}", callback_data="param:strategy")],
-        [InlineKeyboardButton(f"✏️ Вход: {_v('volume')} USDT", callback_data="param:volume")],
-        [InlineKeyboardButton(f"✏️ Шаг: {_v('so_step')}%", callback_data="param:so_step")],
+        [InlineKeyboardButton(f"✏️ Strategy: {strategy_en}", callback_data="param:strategy")],
+        [InlineKeyboardButton(f"✏️ Entry: {_v('volume')} USDT", callback_data="param:volume")],
+        [InlineKeyboardButton(f"✏️ SO step: {_v('so_step')}%", callback_data="param:so_step")],
         [
-            InlineKeyboardButton(f"✏️ Множ. шага: {_v('step_mult')}", callback_data="param:step_mult"),
-            InlineKeyboardButton(f"✏️ Множ. объёма: {_v('vol_mult')}", callback_data="param:vol_mult"),
+            InlineKeyboardButton(f"✏️ Price mult: {_v('step_mult')}", callback_data="param:step_mult"),
+            InlineKeyboardButton(f"✏️ Vol mult: {_v('vol_mult')}", callback_data="param:vol_mult"),
         ],
-        [InlineKeyboardButton(f"✏️ ТП: {_v('tp')}%", callback_data="param:tp")],
-        [InlineKeyboardButton(f"✏️ Циклов: {cycles_str}", callback_data="param:cycles")],
+        [InlineKeyboardButton(f"✏️ TP: {_v('tp')}%", callback_data="param:tp")],
+        [InlineKeyboardButton(f"✏️ Cycles: {cycles_str}", callback_data="param:cycles")],
         [
-            InlineKeyboardButton("Запустить ✅", callback_data=f"start:{tpl_id}:{pair}"),
-            InlineKeyboardButton("Отмена ❌", callback_data="cancel_flow"),
+            InlineKeyboardButton("Launch ✅", callback_data=f"start:{tpl_id}:{pair}"),
+            InlineKeyboardButton("Cancel ❌", callback_data="cancel_flow"),
         ],
     ]
     return InlineKeyboardMarkup(rows)

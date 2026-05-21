@@ -53,7 +53,7 @@ async def _active_bots_keyboard(user_id: int, cmd: str) -> InlineKeyboardMarkup 
 
 async def cmd_new(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text("Введите монету (например: DOGE или DOGEUSDT):")
+        await update.message.reply_text("Enter a coin (e.g. DOGE or DOGEUSDT):")
         context.user_data["pending_cmd"] = "new"
         return
 
@@ -63,7 +63,7 @@ async def cmd_new(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         bots = await client.get_bots()
     except CryptorgError as e:
-        await update.message.reply_text(f"Ошибка Cryptorg:\n`{e}`", parse_mode="Markdown")
+        await update.message.reply_text(f"Cryptorg error:\n`{e}`", parse_mode="Markdown")
         return
 
     # Only show template bots (not currently active clones)
@@ -76,7 +76,7 @@ async def cmd_new(update: Update, context: ContextTypes.DEFAULT_TYPE):
     templates = [b for b in bots if b["id"] not in active_cbot_ids]
 
     if not templates:
-        await update.message.reply_text("Нет доступных шаблонов.")
+        await update.message.reply_text("No templates available.")
         return
 
     buttons = [
@@ -87,7 +87,7 @@ async def cmd_new(update: Update, context: ContextTypes.DEFAULT_TYPE):
         for b in templates
     ]
     await update.message.reply_text(
-        f"Пара: *{pair}*\nВыберите шаблон:",
+        f"Pair: *{pair}*\nSelect a template:",
         reply_markup=InlineKeyboardMarkup(buttons),
         parse_mode="Markdown",
     )
@@ -102,11 +102,11 @@ async def cmd_active(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )).scalars().all()
 
     if not bots:
-        await update.message.reply_text("Активных ботов нет.")
+        await update.message.reply_text("No active bots.")
         return
 
     lines = [
-        f"• *{b.pair}* — bot `{b.cryptorg_bot_id}` (с {_fmt_dt(b.created_at)})"
+        f"• *{b.pair}* — bot `{b.cryptorg_bot_id}` (since {_fmt_dt(b.created_at)})"
         for b in bots
     ]
     await update.message.reply_text("\n".join(lines), parse_mode="Markdown")
@@ -132,9 +132,9 @@ async def cmd_stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         kb = await _active_bots_keyboard(user_id, "stop")
         if kb:
-            await update.message.reply_text("Выберите бота для остановки:", reply_markup=kb)
+            await update.message.reply_text("Select a bot to stop:", reply_markup=kb)
         else:
-            await update.message.reply_text("Активных ботов нет.")
+            await update.message.reply_text("No active bots.")
         return
 
     pair = _normalize_pair(context.args[0])
@@ -143,16 +143,16 @@ async def cmd_stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     async with _factory()() as session:
         bot = await _find_active_bot(session, user_id, pair)
         if not bot:
-            await update.message.reply_text(f"Активный бот для {pair} не найден.")
+            await update.message.reply_text(f"No active bot found for {pair}.")
             return
         try:
             await client.stop_bot(bot.cryptorg_bot_id)
             bot.status = "stopped"
             bot.stopped_at = datetime.now(timezone.utc)
             await session.commit()
-            await update.message.reply_text(f"*{pair}* — бот выключен.", parse_mode="Markdown")
+            await update.message.reply_text(f"*{pair}* — bot stopped.", parse_mode="Markdown")
         except CryptorgError as e:
-            await update.message.reply_text(f"Ошибка Cryptorg:\n`{e}`", parse_mode="Markdown")
+            await update.message.reply_text(f"Cryptorg error:\n`{e}`", parse_mode="Markdown")
 
 
 async def cmd_close(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -160,9 +160,9 @@ async def cmd_close(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         kb = await _active_bots_keyboard(user_id, "close")
         if kb:
-            await update.message.reply_text("Выберите бота для закрытия позиции:", reply_markup=kb)
+            await update.message.reply_text("Select a bot to close position:", reply_markup=kb)
         else:
-            await update.message.reply_text("Активных ботов нет.")
+            await update.message.reply_text("No active bots.")
         return
 
     pair = _normalize_pair(context.args[0])
@@ -171,19 +171,19 @@ async def cmd_close(update: Update, context: ContextTypes.DEFAULT_TYPE):
     async with _factory()() as session:
         bot = await _find_active_bot(session, user_id, pair)
         if not bot:
-            await update.message.reply_text(f"Активный бот для {pair} не найден.")
+            await update.message.reply_text(f"No active bot found for {pair}.")
             return
         if not bot.deal_id:
-            await update.message.reply_text(f"У бота {pair} нет активной сделки.")
+            await update.message.reply_text(f"No active deal for {pair}.")
             return
         try:
             await client.kill_deal(bot.deal_id)
             bot.status = "closed"
             bot.stopped_at = datetime.now(timezone.utc)
             await session.commit()
-            await update.message.reply_text(f"*{pair}* — позиция закрыта по рынку.", parse_mode="Markdown")
+            await update.message.reply_text(f"*{pair}* — position closed at market.", parse_mode="Markdown")
         except CryptorgError as e:
-            await update.message.reply_text(f"Ошибка Cryptorg:\n`{e}`", parse_mode="Markdown")
+            await update.message.reply_text(f"Cryptorg error:\n`{e}`", parse_mode="Markdown")
 
 
 async def cmd_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -191,9 +191,9 @@ async def cmd_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         kb = await _active_bots_keyboard(user_id, "cancel")
         if kb:
-            await update.message.reply_text("Выберите бота для отмены сделки:", reply_markup=kb)
+            await update.message.reply_text("Select a bot to cancel deal:", reply_markup=kb)
         else:
-            await update.message.reply_text("Активных ботов нет.")
+            await update.message.reply_text("No active bots.")
         return
 
     pair = _normalize_pair(context.args[0])
@@ -202,19 +202,19 @@ async def cmd_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     async with _factory()() as session:
         bot = await _find_active_bot(session, user_id, pair)
         if not bot:
-            await update.message.reply_text(f"Активный бот для {pair} не найден.")
+            await update.message.reply_text(f"No active bot found for {pair}.")
             return
         if not bot.deal_id:
-            await update.message.reply_text(f"У бота {pair} нет активной сделки.")
+            await update.message.reply_text(f"No active deal for {pair}.")
             return
         try:
             await client.cancel_deal(bot.deal_id)
             bot.status = "stopped"
             bot.stopped_at = datetime.now(timezone.utc)
             await session.commit()
-            await update.message.reply_text(f"*{pair}* — сделка отменена.", parse_mode="Markdown")
+            await update.message.reply_text(f"*{pair}* — deal cancelled.", parse_mode="Markdown")
         except CryptorgError as e:
-            await update.message.reply_text(f"Ошибка Cryptorg:\n`{e}`", parse_mode="Markdown")
+            await update.message.reply_text(f"Cryptorg error:\n`{e}`", parse_mode="Markdown")
 
 
 async def cmd_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -222,9 +222,9 @@ async def cmd_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         kb = await _active_bots_keyboard(user_id, "status")
         if kb:
-            await update.message.reply_text("Выберите бота:", reply_markup=kb)
+            await update.message.reply_text("Select a bot:", reply_markup=kb)
         else:
-            await update.message.reply_text("Активных ботов нет.")
+            await update.message.reply_text("No active bots.")
         return
 
     pair = _normalize_pair(context.args[0])
@@ -264,17 +264,17 @@ async def _send_status(reply_fn, bot: RunningBot, template, context: ContextType
 
         text = (
             f"*{bot.pair}*\n"
-            f"Шаблон: {template.name if template else '—'}\n"
+            f"Template: {template.name if template else '—'}\n"
             f"Avg Entry: `{entry}`\n"
             f"Mark Price: `{mark}`\n"
-            f"Позиция PnL: `{unrealised}`\n"
-            f"Реализовано всего: `{cum_realised}`\n"
-            f"Объём: `{size}`\n"
-            f"Работает: {hours}ч {minutes}м"
+            f"Position PnL: `{unrealised}`\n"
+            f"Realized total: `{cum_realised}`\n"
+            f"Size: `{size}`\n"
+            f"Running: {hours}h {minutes}m"
         )
         await reply_fn(text, parse_mode="Markdown")
     except Exception as e:
-        await reply_fn(f"Ошибка Bybit:\n`{e}`", parse_mode="Markdown")
+        await reply_fn(f"Bybit error:\n`{e}`", parse_mode="Markdown")
 
 
 async def cmd_templates(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -282,7 +282,7 @@ async def cmd_templates(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         bots = await client.get_bots()
     except CryptorgError as e:
-        await update.message.reply_text(f"Ошибка Cryptorg:\n`{e}`", parse_mode="Markdown")
+        await update.message.reply_text(f"Cryptorg error:\n`{e}`", parse_mode="Markdown")
         return
 
     # Exclude bots currently in use as active running bots
@@ -295,12 +295,12 @@ async def cmd_templates(update: Update, context: ContextTypes.DEFAULT_TYPE):
     templates = [b for b in bots if b["id"] not in active_cbot_ids]
 
     if not templates:
-        await update.message.reply_text("Нет доступных шаблонов.")
+        await update.message.reply_text("No templates available.")
         return
 
     lines = [
         f"• *{b.get('title') or 'Bot ' + str(b['id'])}*\n"
-        f"  ID: `{b['id']}` | Пара: {', '.join(b.get('pairs', ['—']))}"
+        f"  ID: `{b['id']}` | Pair: {', '.join(b.get('pairs', ['—']))}"
         for b in templates
     ]
     await update.message.reply_text("\n\n".join(lines), parse_mode="Markdown")
@@ -343,15 +343,15 @@ async def _handle_param_value(
         if field in NUMERIC:
             value = float(raw.replace(",", "."))
             if value <= 0:
-                raise ValueError("должно быть больше 0")
+                raise ValueError("must be greater than 0")
         elif field in INT_FIELDS:
             value = int(raw)
             if value < 0:
-                raise ValueError("не может быть отрицательным")
+                raise ValueError("cannot be negative")
         else:
             value = raw
     except ValueError as e:
-        await update.message.reply_text(f"Неверное значение: {e}.\nВведите ещё раз:")
+        await update.message.reply_text(f"Invalid value: {e}.\nPlease try again:")
         return  # keep editing_field so next message is also handled
 
     context.user_data.pop("editing_field")
@@ -385,11 +385,11 @@ async def handle_sel_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     async with _factory()() as session:
         bot = await _find_active_bot_by_id(session, rb_id)
         if not bot or bot.telegram_user != user_id:
-            await query.edit_message_text("Бот не найден.")
+            await query.edit_message_text("Bot not found.")
             return
         template = await session.get(Template, bot.template_id)
 
-    await query.edit_message_text(f"Загружаю статус *{bot.pair}*...", parse_mode="Markdown")
+    await query.edit_message_text(f"Loading status *{bot.pair}*...", parse_mode="Markdown")
     await _send_status(
         lambda text, **kw: query.edit_message_text(text, **kw),
         bot, template, context
@@ -406,16 +406,16 @@ async def handle_sel_stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     async with _factory()() as session:
         bot = await _find_active_bot_by_id(session, rb_id)
         if not bot or bot.telegram_user != user_id:
-            await query.edit_message_text("Бот не найден.")
+            await query.edit_message_text("Bot not found.")
             return
         try:
             await client.stop_bot(bot.cryptorg_bot_id)
             bot.status = "stopped"
             bot.stopped_at = datetime.now(timezone.utc)
             await session.commit()
-            await query.edit_message_text(f"*{bot.pair}* — бот выключен.", parse_mode="Markdown")
+            await query.edit_message_text(f"*{bot.pair}* — bot stopped.", parse_mode="Markdown")
         except CryptorgError as e:
-            await query.edit_message_text(f"Ошибка Cryptorg:\n`{e}`", parse_mode="Markdown")
+            await query.edit_message_text(f"Cryptorg error:\n`{e}`", parse_mode="Markdown")
 
 
 async def handle_sel_close(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -428,19 +428,19 @@ async def handle_sel_close(update: Update, context: ContextTypes.DEFAULT_TYPE):
     async with _factory()() as session:
         bot = await _find_active_bot_by_id(session, rb_id)
         if not bot or bot.telegram_user != user_id:
-            await query.edit_message_text("Бот не найден.")
+            await query.edit_message_text("Bot not found.")
             return
         if not bot.deal_id:
-            await query.edit_message_text(f"У бота {bot.pair} нет активной сделки.")
+            await query.edit_message_text(f"No active deal for {bot.pair}.")
             return
         try:
             await client.kill_deal(bot.deal_id)
             bot.status = "closed"
             bot.stopped_at = datetime.now(timezone.utc)
             await session.commit()
-            await query.edit_message_text(f"*{bot.pair}* — позиция закрыта по рынку.", parse_mode="Markdown")
+            await query.edit_message_text(f"*{bot.pair}* — position closed at market.", parse_mode="Markdown")
         except CryptorgError as e:
-            await query.edit_message_text(f"Ошибка Cryptorg:\n`{e}`", parse_mode="Markdown")
+            await query.edit_message_text(f"Cryptorg error:\n`{e}`", parse_mode="Markdown")
 
 
 async def handle_sel_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -453,16 +453,16 @@ async def handle_sel_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     async with _factory()() as session:
         bot = await _find_active_bot_by_id(session, rb_id)
         if not bot or bot.telegram_user != user_id:
-            await query.edit_message_text("Бот не найден.")
+            await query.edit_message_text("Bot not found.")
             return
         if not bot.deal_id:
-            await query.edit_message_text(f"У бота {bot.pair} нет активной сделки.")
+            await query.edit_message_text(f"No active deal for {bot.pair}.")
             return
         try:
             await client.cancel_deal(bot.deal_id)
             bot.status = "stopped"
             bot.stopped_at = datetime.now(timezone.utc)
             await session.commit()
-            await query.edit_message_text(f"*{bot.pair}* — сделка отменена.", parse_mode="Markdown")
+            await query.edit_message_text(f"*{bot.pair}* — deal cancelled.", parse_mode="Markdown")
         except CryptorgError as e:
-            await query.edit_message_text(f"Ошибка Cryptorg:\n`{e}`", parse_mode="Markdown")
+            await query.edit_message_text(f"Cryptorg error:\n`{e}`", parse_mode="Markdown")

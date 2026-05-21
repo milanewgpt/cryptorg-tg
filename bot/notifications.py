@@ -37,11 +37,11 @@ def _so_notify_text(pair: str, prev_size: float, new_size: float, pos: dict) -> 
     cum_realised = _fmt_float(pos.get("cumRealisedPnl"))
     return (
         f"*Safety Order Filled*\n{pair}\n\n"
-        f"Объём: {prev_size} → {new_size}\n"
+        f"Size: {prev_size} → {new_size}\n"
         f"Avg Entry: `{avg}`\n"
         f"Mark Price: `{mark}`\n"
-        f"Позиция PnL: `{unrealised}`\n"
-        f"Реализовано всего: `{cum_realised}`"
+        f"Position PnL: `{unrealised}`\n"
+        f"Realized total: `{cum_realised}`"
     )
 
 
@@ -99,12 +99,12 @@ async def _poll_once(bot: Bot, bybit: BybitClient):
                 if prev is not None:
                     cum = _fmt_float(prev.get("cumRealisedPnl"))
                     await _notify(bot, rb.telegram_user,
-                        f"*Position Closed*\n{rb.pair}\n\nРеализовано: `{cum}`"
+                        f"*Position Closed*\n{rb.pair}\n\nRealized: `{cum}`"
                     )
                     async with factory() as s2:
                         bot_row = await s2.get(RunningBot, rb.id)
                         if bot_row:
-                            bot_row.status = "stopped"
+                            bot_row.status = "closed"
                             bot_row.stopped_at = datetime.now(timezone.utc)
                             await s2.commit()
                     _last_state.pop(rb.id, None)

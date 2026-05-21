@@ -9,7 +9,7 @@ from db.models import Template, RunningBot
 from cryptorg.client import CryptorgClient, CryptorgError
 from bot.handlers.param_utils import (
     extract_params, get_display_params,
-    format_params_text, make_edit_buttons, STRATEGY_RU,
+    format_params_text, make_edit_buttons, STRATEGY_EN,
 )
 
 logger = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ async def handle_template_choice(update: Update, context: ContextTypes.DEFAULT_T
     try:
         bot_data = await client.get_bot(cryptorg_bot_id)
     except CryptorgError as e:
-        await query.edit_message_text(f"Ошибка получения шаблона:\n`{e}`", parse_mode="Markdown")
+        await query.edit_message_text(f"Failed to load template:\n`{e}`", parse_mode="Markdown")
         return
 
     title = bot_data.get("title", f"Bot {cryptorg_bot_id}")
@@ -47,14 +47,14 @@ async def handle_template_choice(update: Update, context: ContextTypes.DEFAULT_T
 
     display_params = get_display_params(context.user_data["edit_state"])
     text = format_params_text(title, pair, display_params)
-    text += "\n\nЗапустить или изменить параметры?"
+    text += "\n\nLaunch or edit parameters?"
 
     buttons = [
         [
-            InlineKeyboardButton("Запустить ✅", callback_data=f"start:{cryptorg_bot_id}:{pair}"),
-            InlineKeyboardButton("Изменить ⚙️", callback_data=f"edit_params:{cryptorg_bot_id}:{pair}"),
+            InlineKeyboardButton("Launch ✅", callback_data=f"start:{cryptorg_bot_id}:{pair}"),
+            InlineKeyboardButton("Edit ⚙️", callback_data=f"edit_params:{cryptorg_bot_id}:{pair}"),
         ],
-        [InlineKeyboardButton("Отмена ❌", callback_data="cancel_flow")],
+        [InlineKeyboardButton("Cancel ❌", callback_data="cancel_flow")],
     ]
     await query.edit_message_text(
         text, reply_markup=InlineKeyboardMarkup(buttons), parse_mode="Markdown"
@@ -72,12 +72,12 @@ async def handle_edit_params(update: Update, context: ContextTypes.DEFAULT_TYPE)
     title = state.get("title", "")
 
     if not tpl_id or not pair:
-        await query.edit_message_text("Ошибка: состояние не найдено.")
+        await query.edit_message_text("Error: state not found.")
         return
 
     display_params = get_display_params(state)
     text = format_params_text(title, pair, display_params)
-    text += "\n\nВыберите параметр для изменения:"
+    text += "\n\nSelect a parameter to edit:"
     kb = make_edit_buttons(display_params, tpl_id, pair)
     await query.edit_message_text(text, reply_markup=kb, parse_mode="Markdown")
 
@@ -95,25 +95,25 @@ async def handle_param_select(update: Update, context: ContextTypes.DEFAULT_TYPE
         pair = state.get("pair")
         buttons = [
             [
-                InlineKeyboardButton("📈 Лонг", callback_data=f"set_strategy:{tpl_id}:{pair}:long"),
-                InlineKeyboardButton("📉 Шорт", callback_data=f"set_strategy:{tpl_id}:{pair}:short"),
+                InlineKeyboardButton("📈 Long", callback_data=f"set_strategy:{tpl_id}:{pair}:long"),
+                InlineKeyboardButton("📉 Short", callback_data=f"set_strategy:{tpl_id}:{pair}:short"),
             ]
         ]
-        await query.edit_message_text("Выберите стратегию:", reply_markup=InlineKeyboardMarkup(buttons))
+        await query.edit_message_text("Select strategy:", reply_markup=InlineKeyboardMarkup(buttons))
         return
 
     FIELD_LABELS = {
-        "volume":    "Вход (USDT) — объём первого и страховочных ордеров",
-        "so_step":   "Шаг страховочных ордеров (%)",
-        "step_mult": "Множитель шага цены СО",
-        "vol_mult":  "Множитель объёма СО (Martingale)",
-        "tp":        "Тейк Профит (%)",
-        "cycles":    "Количество циклов (целое число, 0 = без лимита)",
+        "volume":    "Entry size (USDT) — base and safety order volume",
+        "so_step":   "Safety order step (%)",
+        "step_mult": "Price step multiplier",
+        "vol_mult":  "Volume multiplier (Martingale)",
+        "tp":        "Take Profit (%)",
+        "cycles":    "Cycles (integer, 0 = unlimited)",
     }
     label = FIELD_LABELS.get(field, field)
     context.user_data["editing_field"] = field
 
-    await query.edit_message_text(f"Введите значение для:\n*{label}*", parse_mode="Markdown")
+    await query.edit_message_text(f"Enter value for:\n*{label}*", parse_mode="Markdown")
 
 
 async def handle_set_strategy(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -122,7 +122,6 @@ async def handle_set_strategy(update: Update, context: ContextTypes.DEFAULT_TYPE
     await query.answer()
 
     parts = query.data.split(":")
-    # set_strategy:<tpl_id>:<pair>:<strategy>
     _, tpl_id_str, pair, strategy = parts[0], parts[1], parts[2], parts[3]
     tpl_id = int(tpl_id_str)
 
@@ -132,7 +131,7 @@ async def handle_set_strategy(update: Update, context: ContextTypes.DEFAULT_TYPE
 
     display_params = get_display_params(state)
     text = format_params_text(title, pair, display_params)
-    text += "\n\nВыберите параметр для изменения:"
+    text += "\n\nSelect a parameter to edit:"
     kb = make_edit_buttons(display_params, tpl_id, pair)
     await query.edit_message_text(text, reply_markup=kb, parse_mode="Markdown")
 
@@ -146,7 +145,7 @@ async def handle_start_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     template_bot_id = int(bot_id_str)
     user_id = update.effective_user.id
 
-    await query.edit_message_text(f"Запускаю *{pair}*...", parse_mode="Markdown")
+    await query.edit_message_text(f"Starting *{pair}*...", parse_mode="Markdown")
 
     state = context.user_data.get("edit_state", {})
     overrides = state.get("custom_overrides") or {}
@@ -190,9 +189,9 @@ async def handle_start_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data.pop("edit_state", None)
 
         await query.edit_message_text(
-            f"*Бот запущен*\n"
-            f"Пара: *{actual_pair}*\n"
-            f"Шаблон: {tpl_title}\n"
+            f"*Bot started*\n"
+            f"Pair: *{actual_pair}*\n"
+            f"Template: {tpl_title}\n"
             f"Bot ID: `{new_bot_id}`\n"
             f"Deal ID: `{deal_id or '—'}`",
             parse_mode="Markdown",
@@ -204,15 +203,15 @@ async def handle_start_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
             except Exception:
                 pass
         if _step == "start" and "500" in str(e):
-            msg = f"Пара *{pair}* не найдена на Bybit — бот не запущен."
+            msg = f"Pair *{pair}* not found on Bybit — bot not started."
         else:
-            msg = f"*Ошибка Cryptorg*\n`{e}`"
+            msg = f"*Cryptorg error*\n`{e}`"
         await query.edit_message_text(msg, parse_mode="Markdown")
     except Exception as e:
         logger.exception("handle_start_bot unexpected error")
-        msg = f"*Ошибка*\n`{type(e).__name__}: {e}`"
+        msg = f"*Error*\n`{type(e).__name__}: {e}`"
         if new_bot_id:
-            msg += f"\n\nБот запущен (ID `{new_bot_id}`), но запись в БД не сохранена."
+            msg += f"\n\nBot started (ID `{new_bot_id}`) but DB record was not saved."
         await query.edit_message_text(msg, parse_mode="Markdown")
 
 
@@ -221,4 +220,4 @@ async def handle_cancel_flow(update: Update, context: ContextTypes.DEFAULT_TYPE)
     await query.answer()
     context.user_data.pop("edit_state", None)
     context.user_data.pop("editing_field", None)
-    await query.edit_message_text("Отменено.")
+    await query.edit_message_text("Cancelled.")

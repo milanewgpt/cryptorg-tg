@@ -45,13 +45,13 @@ def _auth_filter():
 async def post_init(app: Application):
     await init_db()
     await app.bot.set_my_commands([
-        BotCommand("new",       "Запустить бота — /new DOGEUSDT"),
-        BotCommand("active",    "Список активных ботов"),
-        BotCommand("status",    "Статус и PnL — /status DOGEUSDT"),
-        BotCommand("stop",      "Выключить бота — /stop DOGEUSDT"),
-        BotCommand("close",     "Закрыть позицию по рынку — /close DOGEUSDT"),
-        BotCommand("cancel",    "Закрыть сделку по рынку — /cancel DOGEUSDT"),
-        BotCommand("templates", "Список шаблонов"),
+        BotCommand("new",       "Start a bot — /new DOGEUSDT"),
+        BotCommand("active",    "List active bots"),
+        BotCommand("status",    "Status & PnL — /status DOGEUSDT"),
+        BotCommand("stop",      "Stop a bot — /stop DOGEUSDT"),
+        BotCommand("close",     "Close position at market — /close DOGEUSDT"),
+        BotCommand("cancel",    "Cancel deal — /cancel DOGEUSDT"),
+        BotCommand("templates", "List templates"),
     ])
     client = CryptorgClient()
     app.bot_data["cryptorg"] = client
@@ -64,7 +64,7 @@ async def post_init(app: Application):
         logger.error("Cryptorg auth failed: %s", e)
         if ALLOWED_USER_ID:
             await app.bot.send_message(chat_id=ALLOWED_USER_ID,
-                text=f"Не удалось войти в Cryptorg:\n`{e}`", parse_mode="Markdown")
+                text=f"Cryptorg login failed:\n`{e}`", parse_mode="Markdown")
     asyncio.create_task(run_poller(app.bot, bybit, client, ALLOWED_USER_ID))
 
 

@@ -4,6 +4,18 @@
 __pycache__/
 *.pyc
 venv/
+*.db
+cryptorg/.jwt_cache
+.obsidian/
+dashboard.md
+сессии/
+проекты/
+цели/
+test_*.py
+railway.toml
+get_access_list.py
+seed_templates.py
+Makefile
 
 ambassador-assistant/
 balance-dashboard/
