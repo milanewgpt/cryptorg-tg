@@ -1,67 +1,57 @@
-# CLAUDE.md — Навигатор
+# CLAUDE.md — Project Navigator
 
-## Кто я
+## User Context
 
-Пользователь: **Людмила**
-Сфера: финансы, Web3, контент, автоматизация
-Цель: стабильный доход 2–3k$/мес через Web3 + оптимизация задач
+User: **Liudmila**
+Domain: finance, Web3, content, automation
+Goal: build stable Web3-related income and reduce manual operational load.
 
-## Как отвечать
+## Response Style
 
-- Кратко, по делу, списками, без воды
-- Давать 2–3 варианта, если есть выбор
-- Учитывать ограниченное время пользователя
-- Язык: русский, если не переключается на английский
+- Be concise and practical.
+- Use short structured answers.
+- Offer 2–3 options when there is a real choice.
+- Account for limited time and context switching.
+- Default language: Russian for user-facing conversations unless the user switches to English.
 
-## Приоритеты
+## Priorities
 
-1. Доход (Web3, работа)
-2. Автоматизация (боты, процессы)
-3. Контент (Twitter, статьи, визуал)
-4. Личные задачи
+1. Income: Web3, work, practical opportunities.
+2. Automation: bots, workflows, monitoring.
+3. Content: Twitter/X, articles, visuals.
+4. Personal operational tasks.
 
-## Регламент сессии (ОБЯЗАТЕЛЬНО)
+## Session Rules
 
-1. Прочитай этот файл
-2. Прочитай `dashboard.md` — текущие задачи
-3. Прочитай последнюю запись в `сессии/`
-4. Используй `.claude/projects/-home-gpt/memory/MEMORY.md` при необходимости
-5. Работаем
-6. В конце значимой сессии — сохрани заметку в `сессии/`
+1. Read this file before working in the repository.
+2. Read `dashboard.md` if it exists.
+3. Read the latest note in `sessions/` if it exists.
+4. Use persistent memory only when needed.
+5. Work on the requested task.
+6. Save meaningful session notes only when the project workflow requires it.
 
-## Правила задач
+## Task Rules
 
-- Все задачи фиксируются в `dashboard.md`
-- Выполненные задачи помечаются `[x]`
-- Новые задачи добавляются в "Сегодня" или "Бэклог"
-- Не терять задачи между сессиями
+- Track active tasks in the project dashboard when one exists.
+- Do not lose tasks between sessions.
+- Do not store temporary task state as durable memory.
 
-## Правила памяти
+## Memory Rules
 
-- Память содержит устойчивые факты о пользователе
-- Не дублировать задачи в память
-- Обновлять только если появился новый паттерн
+- Memory should contain stable facts about the user or project.
+- Do not duplicate temporary tasks into memory.
+- Update memory only when a durable pattern appears.
 
-## Ограничения
+## Constraints
 
-- Не придумывать факты
-- Не усложнять решения без необходимости
-- Давать практичные шаги
+- Do not invent facts.
+- Do not add unnecessary complexity.
+- Prefer practical next steps.
 
-## Карта файлов
+## Active Project Areas
 
-| Файл / Папка | Назначение |
-|---|---|
-| `CLAUDE.md` | **Этот файл.** Инструкции и навигация |
-| `dashboard.md` | Все текущие задачи |
-| `цели/2026.md` | Цели на год |
-| `сессии/` | Заметки по прошедшим разговорам |
-| `проекты/` | Контекст по активным проектам |
-| `.claude/projects/-home-gpt/memory/MEMORY.md` | Авто-память агента |
+Code commonly lives under `/home/gpt/`:
 
-## Активные проекты
-
-Код лежит в `/home/gpt/`:
 - `ambassador-assistant/`
 - `balance-dashboard/`
 - `medicine-bot/`
@@ -70,4 +60,4 @@
 - `evening-events/`
 - `qwen3-tts/`
 
-Для контекста — читай `проекты/<название>.md` если есть, иначе иди прямо в папку.
+For project context, read the matching project note if available; otherwise inspect the repository directly.
