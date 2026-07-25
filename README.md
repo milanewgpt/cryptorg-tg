@@ -1,8 +1,6 @@
 # Cryptorg Telegram Bot
 
-Telegram control bot for Cryptorg trading bots.
-
-The bot provides a compact Telegram interface for starting bots from templates, checking active bots, viewing status and PnL, stopping bots, closing positions, and cancelling deals.
+Cryptorg Telegram trading assistant for managing trading templates and active/cancel/close/new operations. It provides Telegram commands to control and review Cryptorg-related trade workflows.
 
 ## Features
 
