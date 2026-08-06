@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import time
 
 from dotenv import load_dotenv
 from telegram import Update, BotCommand
@@ -77,7 +78,17 @@ async def post_shutdown(app: Application):
         await bybit.close()
 
 
+def _is_disabled() -> bool:
+    value = os.getenv("CRYPTORG_TG_ENABLED", os.getenv("BOT_ENABLED", "true"))
+    return value.strip().lower() in {"0", "false", "no", "off", "disabled"}
+
+
 def main():
+    if _is_disabled():
+        logger.warning("Cryptorg TG bot is disabled by CRYPTORG_TG_ENABLED/BOT_ENABLED; idling without Telegram polling or Cryptorg/Bybit calls")
+        while True:
+            time.sleep(3600)
+
     token = os.getenv("TELEGRAM_TOKEN")
     if not token:
         raise RuntimeError("TELEGRAM_TOKEN is not set")
